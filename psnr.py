@@ -7,7 +7,7 @@ from scipy.signal import convolve2d
 PIXEL_MAX = 255.0
 
 # Calculate PSNR
-def psnr1(img1, img2):
+def psnr(img1, img2):
     mse = np.mean((img1 - img2) ** 2)
     if mse == 0:
         return 100    
@@ -68,9 +68,12 @@ if __name__ == "__main__":
     img6 = cv2.imread('pic/jpgggg.png',cv2.IMREAD_GRAYSCALE)
     
     # PSNR
-    print("==================================================")
-    psnr_value = psnr1(img1,img2)
-    print("PSNR:",psnr_value)
+    print("==================================================")    
+    print("PSNR:",psnr(img1,img2))
+    print("PSNR:",psnr(img1,img3))
+    print("PSNR:",psnr(img1,img4))
+    print("PSNR:",psnr(img1,img5))
+    print("PSNR:",psnr(img1,img6))
 
     # SSIM
     print("==================================================")        
