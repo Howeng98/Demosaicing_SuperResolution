@@ -1,16 +1,82 @@
 import cv2
 import numpy as np
 import math
+from PIL import Image 
+from scipy.signal import convolve2d
 
 PIXEL_MAX = 255.0
 
+# Calculate PSNR
 def psnr1(img1, img2):
     mse = np.mean((img1 - img2) ** 2)
     if mse == 0:
         return 100    
     return 20 * math.log10(PIXEL_MAX/math.sqrt(mse))
 
-img1 = cv2.imread('1.png')
-img2 = cv2.imread('2.png')
-psnr_value = psnr1(img2,img1)
-print("PSNR:",psnr_value)
+#  Calculate SSIM
+def matlab_style_gauss2D(shape=(3,3),sigma=0.5):
+    m,n = [(ss-1.)/2. for ss in shape]
+    y,x = np.ogrid[-m:m+1,-n:n+1]
+    h = np.exp( -(x*x + y*y) / (2.*sigma*sigma) )
+    h[ h < np.finfo(h.dtype).eps*h.max() ] = 0
+    sumh = h.sum()
+    if sumh != 0:
+        h /= sumh
+    return h
+
+def filter2(x, kernel, mode='same'):
+    return convolve2d(x, np.rot90(kernel, 2), mode=mode)
+
+def compute_ssim(im1, im2, k1=0.01, k2=0.03, win_size=11, L=255):
+
+    if not im1.shape == im2.shape:
+        raise ValueError("Input Images must have the same dimensions")
+    if len(im1.shape) > 2:
+        raise ValueError("Please input the images with 1 channel")
+
+    M, N = im1.shape
+    C1 = (k1*L)**2
+    C2 = (k2*L)**2
+    window = matlab_style_gauss2D(shape=(win_size,win_size), sigma=1.5)
+    window = window/np.sum(np.sum(window))
+
+    if im1.dtype == np.uint8:
+        im1 = np.double(im1)
+    if im2.dtype == np.uint8:
+        im2 = np.double(im2)
+
+    mu1 = filter2(im1, window, 'valid')
+    mu2 = filter2(im2, window, 'valid')
+    mu1_sq = mu1 * mu1
+    mu2_sq = mu2 * mu2
+    mu1_mu2 = mu1 * mu2
+    sigma1_sq = filter2(im1*im1, window, 'valid') - mu1_sq
+    sigma2_sq = filter2(im2*im2, window, 'valid') - mu2_sq
+    sigmal2 = filter2(im1*im2, window, 'valid') - mu1_mu2
+
+    ssim_map = ((2*mu1_mu2+C1) * (2*sigmal2+C2)) / ((mu1_sq+mu2_sq+C1) * (sigma1_sq+sigma2_sq+C2))
+
+    return np.mean(np.mean(ssim_map))
+
+
+if __name__ == "__main__":
+    img1 = cv2.imread('pic/original.png',cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread('pic/contrast.png',cv2.IMREAD_GRAYSCALE)
+    img3 = cv2.imread('pic/blur.png',cv2.IMREAD_GRAYSCALE)
+    img4 = cv2.imread('pic/desaturated.png',cv2.IMREAD_GRAYSCALE)
+    img5 = cv2.imread('pic/noise.png',cv2.IMREAD_GRAYSCALE)
+    img6 = cv2.imread('pic/jpgggg.png',cv2.IMREAD_GRAYSCALE)
+    
+    # PSNR
+    print("==================================================")
+    psnr_value = psnr1(img1,img2)
+    print("PSNR:",psnr_value)
+
+    # SSIM
+    print("==================================================")        
+    print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img3)))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img4)))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img5)))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img6)))
+    
