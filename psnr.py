@@ -68,7 +68,9 @@ if __name__ == "__main__":
     img6 = cv2.imread('pic/jpgggg.png',cv2.IMREAD_GRAYSCALE)
     
     # PSNR
-    print("==================================================")    
+    print("==================================================")   
+    print("NORMAL")
+    print("==================================================")
     print("PSNR:",psnr(img1,img2))
     print("PSNR:",psnr(img1,img3))
     print("PSNR:",psnr(img1,img4))
@@ -83,32 +85,137 @@ if __name__ == "__main__":
     print("SSIM",compute_ssim(np.array(img1),np.array(img5)))
     print("SSIM",compute_ssim(np.array(img1),np.array(img6)))
     
-    # print("==================================================")
-    # print("Before resize:")
-    # print("PSNR:",psnr(img1,img2))
-    # print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
+    
+    print("==================================================")
+    print("LINEAR for compress / CUBIC for enlarge")
+    print("==================================================")    
+    print("Before resize:")
+    print("PSNR:",psnr(img1,img2))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
 
 
-    # img7 = cv2.resize(img2,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
-    # img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)    
-    # print("After resize:")
-    # print("PSNR:",psnr(img1,img7))
-    # print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    img7 = cv2.resize(img2,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)
+    print("After resize:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
 
 
-    # img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
-    # img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)    
-    # print("After resize2:")
-    # print("PSNR:",psnr(img1,img7))
-    # print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC) 
+    print("After resize2:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
     
     
-    # img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
-    # img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)    
-    # print("After resize3:")
-    # print("PSNR:",psnr(img1,img7))
-    # print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)    
+    print("After resize3:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
 
     # cv2.waitKey()
     # cv2.imshow("img1",img1)
     # cv2.imshow("img7",img7)
+
+    print("==================================================")
+    print("LINEAR for compress / LINEAR for enlarge")
+    print("==================================================")    
+    print("Before resize:")
+    print("PSNR:",psnr(img1,img2))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
+
+
+    img7 = cv2.resize(img2,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_LINEAR)
+    print("After resize:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+
+
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_LINEAR) 
+    print("After resize2:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    
+    
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_LINEAR)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_LINEAR)    
+    print("After resize3:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+
+    print("==================================================")
+    print("CUBIC for compress / CUBIC for enlarge")
+    print("==================================================")    
+    print("Before resize:")
+    print("PSNR:",psnr(img1,img2))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
+
+
+    img7 = cv2.resize(img2,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)
+    print("After resize:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+
+
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC) 
+    print("After resize2:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    
+    
+    img7 = cv2.resize(img7,None,fx=0.5,fy=0.5,interpolation = cv2.INTER_CUBIC)
+    img7 = cv2.resize(img7,None,fx=2,fy=2,interpolation = cv2.INTER_CUBIC)    
+    print("After resize3:")
+    print("PSNR:",psnr(img1,img7))
+    print("SSIM",compute_ssim(np.array(img1),np.array(img7)))
+    
+
+
+    ###################################################################################################################
+    # Use Bicubic and Bilinear as filter to resize Low-Resolution Image
+    image = Image.open('pic/original.png')
+    w,h = image.size
+    
+    image_resize = image.resize((w/2,h/2)) #default
+    image_resize1 = image.resize((w/2,h/2),Image.BILINEAR)
+    image_resize2 = image.resize((w/2,h/2),Image.BICUBIC)
+    image_resize3 = image.resize((w/2,h/2),Image.ANTIALIAS)
+
+    image_resize = image.resize((w,h)) #default
+    image_resize1 = image.resize((w,h),Image.BILINEAR)
+    image_resize2 = image.resize((w,h),Image.BICUBIC)
+    image_resize3 = image.resize((w,h),Image.ANTIALIAS)
+    
+    image = cv2.cvtColor(np.asarray(image) , cv2.COLOR_RGB2BGR)  
+    image_resize = cv2.cvtColor(np.asarray(image_resize) , cv2.COLOR_RGB2BGR) 
+    image_resize1 = cv2.cvtColor(np.asarray(image_resize1) , cv2.COLOR_RGB2BGR) 
+    image_resize2 = cv2.cvtColor(np.asarray(image_resize2) , cv2.COLOR_RGB2BGR) 
+    image_resize3 = cv2.cvtColor(np.asarray(image_resize3) , cv2.COLOR_RGB2BGR) 
+
+    image = cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
+    image_resize = cv2.cvtColor(image_resize,cv2.COLOR_RGB2GRAY)
+    image_resize1 = cv2.cvtColor(image_resize1,cv2.COLOR_RGB2GRAY)
+    image_resize2 = cv2.cvtColor(image_resize2,cv2.COLOR_RGB2GRAY)
+    image_resize3 = cv2.cvtColor(image_resize3,cv2.COLOR_RGB2GRAY)
+
+    # PSNR
+    print("============Bicubic and Bilinear==================")
+    print("==================================================")
+    print("PSNR:",psnr(image,image_resize))
+    print("PSNR:",psnr(image,image_resize1))
+    print("PSNR:",psnr(image,image_resize2))
+    print("PSNR:",psnr(image,image_resize3))
+
+    # SSIM
+    print("==================================================")        
+    print("SSIM",compute_ssim(np.array(image),np.array(image_resize)))
+    print("SSIM",compute_ssim(np.array(image),np.array(image_resize1)))
+    print("SSIM",compute_ssim(np.array(image),np.array(image_resize2)))
+    print("SSIM",compute_ssim(np.array(image),np.array(image_resize3)))    
+    # Image.fromarray(np.hstack((np.array(image_resize),np.array(image_resize1),np.array(image_resize2),np.array(image_resize3)))).show()
+
