@@ -7,3 +7,5 @@ There got a few ways to archieve the target image,but we hope can produce a effi
 ```
 python psnr.py
 ```
+## Output
+![](./output/normal_value.png)
