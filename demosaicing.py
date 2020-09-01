@@ -60,8 +60,8 @@ def compute_ssim(im1, im2, k1=0.01, k2=0.03, win_size=11, L=255):
 
 
 if __name__ == "__main__":
-    img1 = cv2.imread('pic/original.png',cv2.IMREAD_GRAYSCALE)
-    img2 = cv2.imread('pic/contrast.png',cv2.IMREAD_GRAYSCALE)
+    img1 = cv2.imread('pic/Original.png',cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread('pic/Original-min.png',cv2.IMREAD_GRAYSCALE)
     img3 = cv2.imread('pic/blur.png',cv2.IMREAD_GRAYSCALE)
     img4 = cv2.imread('pic/desaturated.png',cv2.IMREAD_GRAYSCALE)
     img5 = cv2.imread('pic/noise.png',cv2.IMREAD_GRAYSCALE)
@@ -72,18 +72,18 @@ if __name__ == "__main__":
     print("NORMAL")
     print("==================================================")
     print("PSNR:",psnr(img1,img2))
-    print("PSNR:",psnr(img1,img3))
-    print("PSNR:",psnr(img1,img4))
-    print("PSNR:",psnr(img1,img5))
-    print("PSNR:",psnr(img1,img6))
+    # print("PSNR:",psnr(img1,img3))
+    # print("PSNR:",psnr(img1,img4))
+    # print("PSNR:",psnr(img1,img5))
+    # print("PSNR:",psnr(img1,img6))
 
     # SSIM
     print("==================================================")        
     print("SSIM",compute_ssim(np.array(img1),np.array(img2)))
-    print("SSIM",compute_ssim(np.array(img1),np.array(img3)))
-    print("SSIM",compute_ssim(np.array(img1),np.array(img4)))
-    print("SSIM",compute_ssim(np.array(img1),np.array(img5)))
-    print("SSIM",compute_ssim(np.array(img1),np.array(img6)))
+    # print("SSIM",compute_ssim(np.array(img1),np.array(img3)))
+    # print("SSIM",compute_ssim(np.array(img1),np.array(img4)))
+    # print("SSIM",compute_ssim(np.array(img1),np.array(img5)))
+    # print("SSIM",compute_ssim(np.array(img1),np.array(img6)))
     
     
     print("==================================================")
