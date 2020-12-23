@@ -19,7 +19,6 @@ oti = 'adam'
 lr = 0.0002
 e_num = 20
 
-
 #http://ethen8181.github.io/machine-learning/keras/resnet_cam/resnet_cam.html
 #https://ithelp.ithome.com.tw/articles/10223034
 
@@ -30,7 +29,6 @@ def main():
 
   # test_image = np.load('test_img.npy')
   # test_label = np.load('test_lab.npy')
-
 
   train_image = []
   train_label = []
