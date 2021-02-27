@@ -124,55 +124,53 @@ from random import shuffle
 
 batch_sz = 16
 oti = 'adam'
-lr = 0.0001
+lr = 0.001
 e_num = 20
 
-#http://ethen8181.github.io/machine-learning/keras/resnet_cam/resnet_cam.html
-#https://ithelp.ithome.com.tw/articles/10223034
 
+# def main():
 
-def main():
-  # train_image = np.load('train_image.npy')
-  # train_label = np.load('train_label.npy')
+train_image = []
+train_label = []
 
-  # test_image = np.load('test_img.npy')
-  # test_label = np.load('test_lab.npy')
+dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
+patch_path = os.path.join(dir_path,'patch')
+entries = os.listdir(patch_path)
+for entry in entries:
+  im = image.load_img(patch_path+'/'+entry, target_size = (64, 64))
+  img = image.img_to_array(im)    
+  # img = img[:,:,0]    
+  # img = img[:,:,np.newaxis]           # Modify here!!!
+  train_image.append(img)
+train_image= np.stack(train_image)
 
-  train_image = []
-  train_label = []
-
-  dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
-  patch_path = os.path.join(dir_path,'patch')
-  entries = os.listdir(patch_path)
-  for entry in entries:
-    im = image.load_img(patch_path+'/'+entry, target_size = (64, 64))
-    img = image.img_to_array(im)    
-    # img = img[:,:,0]    
-    # img = img[:,:,np.newaxis]           # Modify here!!!
-    train_image.append(img)
-  train_image= np.stack(train_image)
-
-  print(train_image.shape)# (x,128,128,1)
-  # np.save('train_image',train_image)     
-
-  label_path = os.path.join(dir_path,'label')
-  entries = os.listdir(label_path)
-  for entry in entries:
-    im = image.load_img(label_path+'/'+entry, target_size = (128, 128))
-    img = image.img_to_array(im)
-    train_label.append(img)
-  train_label = np.stack(train_label)
-
-  print(train_label.shape)# (x,256,256,3)
+print(train_image.shape)# (x,128,128,1)
   
-  # np.save('train_label',train_label)
 
-  index = [i for i in range(train_image.shape[0])]
-  shuffle(index)
-  train_image = train_image[index,:,:,:];
-  train_label = train_label[index,:,:,:];
+label_path = os.path.join(dir_path,'label')
+entries = os.listdir(label_path)
+for entry in entries:
+  im = image.load_img(label_path+'/'+entry, target_size = (128, 128))
+  img = image.img_to_array(im)
+  train_label.append(img)
+train_label = np.stack(train_label)
+
+print(train_label.shape)# (x,256,256,3)
 
 
+
+index = [i for i in range(train_image.shape[0])]
+shuffle(index)
+train_image = train_image[index,:,:,:];
+train_label = train_label[index,:,:,:];
+
+# model.save(os.path.join(dir_path,'model.h5'))
+
+# if __name__ == '__main__':
+#   main()
+
+############################# Model Structure ################################################
+def create_model():
   inputs = keras.Input(shape=(None,None,3))
 
   ##Subpixel Construction
@@ -182,55 +180,55 @@ def main():
 
   ##Learning Residual (DCNN)
   ####Conv 3x3x64x64 + PReLu
-  x = keras.layers.Conv2D(filters = 64, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  # 2
-                     padding = 'same', 
-                     input_shape = (None,None,3))(init)
-  
+  x = keras.layers.Conv2D(filters=64,
+                      kernel_size = 3, 
+                      strides = 1,  # 2
+                      padding = 'same', 
+                      input_shape = (None,None,3))(init)
+
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Residual Block
   for i in range(6):
-    Conv1 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(x)
+    Conv1 = keras.layers.SeparableConv2D(filters=64,
+                        kernel_size = 3, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        input_shape = (None,None,64))(x)
     
     PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-    Conv2 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(PReLu)
-   
+    Conv2 = keras.layers.SeparableConv2D(filters=64,
+                        kernel_size = 3, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        input_shape = (None,None,64))(PReLu)
+    
     
     x = keras.layers.Add()([Conv2,x])
     x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Conv 3x3x64x64 + PReLu
-  x = keras.layers.Conv2D(filters = 64, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  # 2
-                     padding = 'same', 
-                     input_shape = (None,None,1))(x)
-  
+  x = keras.layers.Conv2D(filters=64,
+                      kernel_size = 3, 
+                      strides = 1,  # 2
+                      padding = 'same', 
+                      input_shape = (None,None,1))(x)
+
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-  
+
   ####Conv 3x3x64x48
-  x = keras.layers.Conv2D(filters = 48, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  
-                     padding = 'same',                      
-                     input_shape = (None,None,64))(x)
-  
+  x = keras.layers.SeparableConv2D(filters=48,
+                      kernel_size = 3, 
+                      strides = 1,  
+                      padding = 'same',                      
+                      input_shape = (None,None,64))(x)
+
   ###########Learning Residual (DCNN)############
-  
+
   ##Recovery From Subpixel
   sub_layer = Lambda(lambda x:tf.nn.depth_to_space(x,4)) 
   Residual_Output = sub_layer(inputs=x)
-  
+
 
   ##Initial Prediction
   R = Lambda(lambda x: x[:,:,:,0])(init)
@@ -244,7 +242,7 @@ def main():
   R = Lambda(lambda x: tf.expand_dims(x, -1))(R)
   G = Lambda(lambda x: tf.expand_dims(x, -1))(G)
   B = Lambda(lambda x: tf.expand_dims(x, -1))(B)
-  
+
   #rgb = tf.keras.backend.stack((R, G,B),axis =  3)
   # print(R.shape)
   rg = keras.layers.Concatenate(axis = 3)([R , G])
@@ -252,26 +250,45 @@ def main():
   # print(rgb.shape)
   Coarse_Output = keras.layers.UpSampling2D(size=(4, 4))(rgb)
 
-
-
   ## + 
   outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
- 
-  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")
-  model.summary()
-  model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['mse'])
-  
-  #histories = Histories()
-  checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', 
-                                save_best_only=True,save_weights_only=True)
-  rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
 
-  history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_sz,verbose=1,
-              validation_split = 0.1,callbacks=[checkpoint,rrp],shuffle = True)
-  model.save(os.path.join(dir_path,'model.h5'))
+  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")  
+  return model
 
-if __name__ == '__main__':
-  main()
+model = create_model()
+model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
+
+#histories = Histories()
+checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', 
+                              save_best_only=True,save_weights_only=True)
+rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
+
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_sz,verbose=1,
+            validation_split = 0.1,callbacks=[checkpoint,rrp],shuffle = True)
+
+# Plotting
+import matplotlib.pyplot as plt
+fig = plt.figure()
+plt.plot()
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Accuracy - 2')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='lower right')
+plt.savefig('model_accuracy2.png')
+plt.show()
+
+plt.plot()
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Loss - 2')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper right')
+plt.savefig('model_loss2.png')
+plt.show()
 
 """**Validation**"""
 
@@ -286,109 +303,45 @@ from PIL import Image
 from keras import backend as K
 import os
 import math
+import shutil
 oti = 'adam'
 
-def create_model():
-  inputs = keras.Input(shape=(None,None,3))
-
-  ##Subpixel Construction
-  sub_layer_2 = Lambda(lambda x:tf.nn.space_to_depth(x,2)) 
-  init = sub_layer_2(inputs=inputs)
-
-
-
-  ##Learning Residual (DCNN)
-  ####Conv 3x3x64x64 + PReLu
-  x = keras.layers.Conv2D(filters = 64, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  # 2
-                     padding = 'same', 
-                     input_shape = (None,None,3))(init)
-  
-  x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
-  ####Residual Block
-  for i in range(6):
-    Conv1 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(x)
-    
-    PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-    Conv2 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(PReLu)
-   
-    
-    x = keras.layers.Add()([Conv2,x])
-    x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-  ####Conv 3x3x64x64 + PReLu
-  x = keras.layers.Conv2D(filters = 64, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  # 2
-                     padding = 'same', 
-                     input_shape = (None,None,1))(x)
-  
-  x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-  ####Conv 3x3x64x48
-  x = keras.layers.Conv2D(filters = 48, #feature map number
-                     kernel_size = 3, 
-                     strides = 1,  
-                     padding = 'same',                      
-                     input_shape = (None,None,64))(x)
-  
-  ###########Learning Residual (DCNN)############
-
-  ##Recovery From Subpixel
-  sub_layer = Lambda(lambda x:tf.nn.depth_to_space(x,4)) 
-  Residual_Output = sub_layer(inputs=x)
-  
-
-  ##Initial Prediction
-  R = Lambda(lambda x: x[:,:,:,0])(init)
-  G = Lambda(lambda x: x[:,:,:,1:3])(init)
-  G = Lambda(lambda x: K.mean(x, axis=3))(G)
-  B = Lambda(lambda x: x[:,:,:,3])(init)
-  # print(init.shape)
-  # print(R.shape)
-  # print(G.shape)
-  # print(B.shape)
-  R = Lambda(lambda x: tf.expand_dims(x, -1))(R)
-  G = Lambda(lambda x: tf.expand_dims(x, -1))(G)
-  B = Lambda(lambda x: tf.expand_dims(x, -1))(B)
-  
-  #rgb = tf.keras.backend.stack((R, G,B),axis =  3)
-  # print(R.shape)
-  rg = keras.layers.Concatenate(axis = 3)([R , G])
-  rgb = keras.layers.Concatenate(axis = 3)([rg,B])
-  # print(rgb.shape)
-  Coarse_Output = keras.layers.UpSampling2D(size=(4, 4))(rgb)
-
-  outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
- 
-  model = keras.Model(inputs=inputs, outputs=outputs, name="mnist_model")
-  return model
 
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 model = create_model()
 model.load_weights(os.path.join(dir_path,'model.hdf5'))
 
 
-kodaout = os.path.join(dir_path, 'kodaout')
-if not os.path.exists(kodaout):
-        os.makedirs(kodaout)
+output_path = os.path.join(dir_path, 'output')
+output_path2 = os.path.join(dir_path, 'output2')
 
-kodain = os.path.join(dir_path, 'koda')
-entries = os.listdir(kodain)
+if os.path.exists(output_path):
+    shutil.rmtree(output_path)
+os.makedirs(output_path)
+
+if os.path.exists(output_path2):
+    shutil.rmtree(output_path2)
+os.makedirs(output_path2)
+
+input_path = os.path.join(dir_path, 'Set14')
+entries = os.listdir(input_path)
+
+print("--------  Start Validation --------")
 for entry in entries:
     # Test Image
-    path = kodain+'/'+entry
+    path = input_path+'/'+entry
     test_image = Image.open(path)
+    
+    if not test_image.size[0]%2 == 0:
+      test_image = test_image.resize((test_image.size[0]-1, test_image.size[1]), Image.BILINEAR)
+    if not test_image.size[1]%2 == 0:
+      test_image = test_image.resize((test_image.size[0], test_image.size[1]-1), Image.BILINEAR)
+
     print(test_image.size)
-    test_image = test_image.resize((test_image.size[0]//2, test_image.size[1]//2), Image.BILINEAR)
+    original_image = test_image.resize((test_image.size[0]*2, test_image.size[1]*2), Image.BILINEAR)
+    path = output_path2+'/'+entry
+    original_image.save(path)
+
     print(test_image.size)
     test_image = np.array(test_image)
     print(test_image.shape)
@@ -398,8 +351,11 @@ for entry in entries:
     out = model.predict(test_image)
     out = out[0]   
     out = image.array_to_img(out)
-    path = kodaout+'/'+entry
+    path = output_path+'/'+entry
     out.save(path)
+print("-------- Finish Validation  --------")
+
+"""**Performance**"""
 
 import cv2
 import numpy as np
@@ -417,8 +373,8 @@ def calculate_psnr(original, contrast):
     
 
 path = 'drive/My Drive/Colab Notebooks/undergraduate_project' 
-input_path = os.path.join(path,'koda')
-output_path = os.path.join(path,'kodaout')
+input_path = os.path.join(path,'output')
+output_path = os.path.join(path,'output2')
 entries = os.listdir(input_path)
 count = 0
 total_psnr = 0.
