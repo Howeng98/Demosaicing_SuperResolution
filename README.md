@@ -15,3 +15,6 @@
 4. reduce_lr callbacks
    - 把reduce_lr加進去:``PSNR:28.72``, ``SSIM:0.724``
    - 把reduce_lr撤回去: ``PSNR:28.87``, ``SSIM:0.738``
+
+5. 同上設定，batch_size改成16,Model_output只有Residual_Output
+   - ``PSNR:29.31``, ``SSIM:0.805``
