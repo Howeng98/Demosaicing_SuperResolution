@@ -8,3 +8,6 @@
 
 2. 2021/04/16 把patch_size從64改成32，label_size從128改成64
    - ``PSNR:28.65``, ``SSIM:0.757``
+
+3. 2021/04/16 把coarse_output拿掉
+   - ``PSNR:28.98``, ``SSIM:0.787``
