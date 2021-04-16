@@ -20,4 +20,4 @@
    - ``PSNR:29.31``, ``SSIM:0.805``
 
 6. 64，128，30，T91，/255.0，6 residual_block, output=Residual_Output, without reduce_lr
-   - `PSNR:29.29``, ``SSIM:0.821``
+   - ``PSNR:29.29``, ``SSIM:0.821``
