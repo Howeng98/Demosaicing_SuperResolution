@@ -11,3 +11,6 @@
 
 3. 2021/04/16 把coarse_output拿掉
    - ``PSNR:28.98``, ``SSIM:0.787``
+
+4. 加入reduce_lr callbacks
+   - ``PSNR:28.72``, ``SSIM:0.724``
