@@ -12,6 +12,27 @@ Original file is located at
 import tensorflow as tf
 tf.test.gpu_device_name()
 
+# Commented out IPython magic to ensure Python compatibility.
+import numpy as np
+from tensorflow.keras import layers
+from keras.preprocessing import image
+import tensorflow as tf 
+from keras.models import Model,load_model
+from keras.utils import to_categorical
+import os
+import keras
+from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
+from keras.layers import Lambda
+from keras.optimizers import Adam, SGD
+from keras.preprocessing.image import ImageDataGenerator
+from keras import backend as K
+import random
+from PIL import Image 
+from random import shuffle
+# %load_ext tensorboard
+import datetime
+import shutil
+
 """**Prepare**"""
 
 import numpy as np
@@ -50,8 +71,8 @@ def split(img,name,dir_path):
     height,width,c = img.shape;
     # print(img.shape)
     count = 0;
-    for i in range(0,height,30):
-        for j in range(0,width,30):
+    for i in range(0, height, 30):
+        for j in range(0, width, 30):
             if( i + label_size < height and j + label_size < width ):
                 tmp = np.zeros([label_size,label_size,3]);
                 tmp2 = np.zeros([label_size,label_size,3]);
@@ -65,7 +86,7 @@ def split(img,name,dir_path):
                 tmp2[:,:,2] = tmp[:,:,0]                
                 cv2.imwrite(path,tmp2)
 
-                zoom = im.resize((patch_size,patch_size)) 
+                zoom = im.resize((patch_size,patch_size), Image.BICUBIC) 
                 zoom2 = np.zeros([patch_size,patch_size,3]);
                 # gray =  np.zeros([patch_size,patch_size]);
                 
@@ -90,7 +111,7 @@ def main():
     if not os.path.exists(os.path.join(path,'label')):
         os.makedirs(os.path.join(path,'label'))
     
-    dataset_path = os.path.join(path,'origin')
+    dataset_path = os.path.join(path,'T91')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -114,7 +135,7 @@ from keras.models import Model,load_model
 from keras.utils import to_categorical
 import os
 import keras
-from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau, EarlyStopping
 from keras.layers import Lambda
 from keras.optimizers import Adam
 from keras import backend as K
@@ -122,40 +143,34 @@ import random
 from PIL import Image 
 from random import shuffle
 
-batch_sz = 16
-oti = 'adam'
-lr = 0.001
-e_num = 20
-
-
-# def main():
-
 train_image = []
 train_label = []
+patch_size = 64 #input = 64x64
+label_size = 128 #output = 128x128
 
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 patch_path = os.path.join(dir_path,'patch')
 entries = os.listdir(patch_path)
 for entry in entries:
-  im = image.load_img(patch_path+'/'+entry, target_size = (64, 64))
-  img = image.img_to_array(im)    
-  # img = img[:,:,0]    
-  # img = img[:,:,np.newaxis]           # Modify here!!!
+  im = image.load_img(patch_path+'/'+entry, target_size = (patch_size, patch_size))
+  img = image.img_to_array(im)
+  img = img/255.
   train_image.append(img)
 train_image= np.stack(train_image)
 
-print(train_image.shape)# (x,128,128,1)
+print(train_image.shape)
   
 
 label_path = os.path.join(dir_path,'label')
 entries = os.listdir(label_path)
 for entry in entries:
-  im = image.load_img(label_path+'/'+entry, target_size = (128, 128))
+  im = image.load_img(label_path+'/'+entry, target_size = (label_size, label_size))
   img = image.img_to_array(im)
+  img = img/255.
   train_label.append(img)
 train_label = np.stack(train_label)
 
-print(train_label.shape)# (x,256,256,3)
+print(train_label.shape)
 
 
 
@@ -164,10 +179,8 @@ shuffle(index)
 train_image = train_image[index,:,:,:];
 train_label = train_label[index,:,:,:];
 
-# model.save(os.path.join(dir_path,'model.h5'))
-
-# if __name__ == '__main__':
-#   main()
+# np.save('drive/My Drive/Colab Notebooks/undergraduate_project/train_image.npy', train_image)
+# np.save('drive/My Drive/Colab Notebooks/undergraduate_project/train_label.npy', train_label)
 
 ############################# Model Structure ################################################
 def create_model():
@@ -177,34 +190,39 @@ def create_model():
   sub_layer_2 = Lambda(lambda x:tf.nn.space_to_depth(x,2)) 
   init = sub_layer_2(inputs=inputs)
 
-
   ##Learning Residual (DCNN)
-  ####Conv 3x3x64x64 + PReLu
+  ####Conv 3x3x64x64 + PReLu  
   x = keras.layers.Conv2D(filters=64,
                       kernel_size = 3, 
                       strides = 1,  # 2
                       padding = 'same', 
-                      input_shape = (None,None,3))(init)
-
+                      input_shape = (None,None,3))(init)  
+  # change here!                       
+  # x = keras.layers.Add()([x, init])
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Residual Block
   for i in range(6):
-    Conv1 = keras.layers.SeparableConv2D(filters=64,
-                        kernel_size = 3, 
+    Conv1 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
                         strides = 1,  # 2
                         padding = 'same',
                         input_shape = (None,None,64))(x)
     
     PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-    Conv2 = keras.layers.SeparableConv2D(filters=64,
+    Conv2 = keras.layers.Conv2D(filters=64,
                         kernel_size = 3, 
                         strides = 1,  # 2
                         padding = 'same',
                         input_shape = (None,None,64))(PReLu)
+    PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
+    Conv3 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        input_shape = (None,None,64))(PReLu)
     
-    
-    x = keras.layers.Add()([Conv2,x])
+    x = keras.layers.Add()([Conv3,x])
     x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Conv 3x3x64x64 + PReLu
@@ -217,7 +235,7 @@ def create_model():
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Conv 3x3x64x48
-  x = keras.layers.SeparableConv2D(filters=48,
+  x = keras.layers.Conv2D(filters=48,
                       kernel_size = 3, 
                       strides = 1,  
                       padding = 'same',                      
@@ -251,21 +269,33 @@ def create_model():
   Coarse_Output = keras.layers.UpSampling2D(size=(4, 4))(rgb)
 
   ## + 
-  outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
+  # outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
 
-  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")  
+  model = keras.Model(inputs=inputs, outputs=Residual_Output, name="JDMSR_model")  
   return model
 
-model = create_model()
-model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
+batch_size = 16
+lr = 0.001
+e_num = 50
+dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 
-#histories = Histories()
+model = create_model()
+model.summary()
+
+sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
+model.compile(optimizer=sgd, loss = 'mean_squared_error', metrics = ['accuracy'])
+
 checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', 
                               save_best_only=True,save_weights_only=True)
 rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
+early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='auto')
 
-history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_sz,verbose=1,
-            validation_split = 0.1,callbacks=[checkpoint,rrp],shuffle = True)
+logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
+
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.2,callbacks=[checkpoint,rrp,tensorboard_callback,early_stopping],shuffle = True)
+
+# %tensorboard --logdir logs
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -304,14 +334,15 @@ from keras import backend as K
 import os
 import math
 import shutil
-oti = 'adam'
 
+width_change = 0
+height_change = 0
 
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 model = create_model()
 model.load_weights(os.path.join(dir_path,'model.hdf5'))
 
-
+input_path = os.path.join(dir_path, 'Set5')
 output_path = os.path.join(dir_path, 'output')
 output_path2 = os.path.join(dir_path, 'output2')
 
@@ -323,25 +354,16 @@ if os.path.exists(output_path2):
     shutil.rmtree(output_path2)
 os.makedirs(output_path2)
 
-input_path = os.path.join(dir_path, 'Set14')
 entries = os.listdir(input_path)
 
-print("--------  Start Validation --------")
 for entry in entries:
     # Test Image
     path = input_path+'/'+entry
     test_image = Image.open(path)
+    path = output_path+'/'+entry
+    test_image.save(path)
     
-    if not test_image.size[0]%2 == 0:
-      test_image = test_image.resize((test_image.size[0]-1, test_image.size[1]), Image.BILINEAR)
-    if not test_image.size[1]%2 == 0:
-      test_image = test_image.resize((test_image.size[0], test_image.size[1]-1), Image.BILINEAR)
-
-    print(test_image.size)
-    original_image = test_image.resize((test_image.size[0]*2, test_image.size[1]*2), Image.BILINEAR)
-    path = output_path2+'/'+entry
-    original_image.save(path)
-
+    test_image = test_image.resize((test_image.size[0]//2, test_image.size[1]//2), Image.BILINEAR)
     print(test_image.size)
     test_image = np.array(test_image)
     print(test_image.shape)
@@ -351,9 +373,8 @@ for entry in entries:
     out = model.predict(test_image)
     out = out[0]   
     out = image.array_to_img(out)
-    path = output_path+'/'+entry
+    path = output_path2+'/'+entry
     out.save(path)
-print("-------- Finish Validation  --------")
 
 """**Performance**"""
 
@@ -383,6 +404,8 @@ total_ssim = 0.
 for entry in entries:
   img1 = cv2.imread(os.path.join(input_path,entry))
   img2 = cv2.imread(os.path.join(output_path,entry))
+  # print(img1.shape)
+  # print(img2.shape)
   # img1 = cv2.resize(img1, (img2.shape[1], img2.shape[0]), interpolation=cv2.INTER_CUBIC)
   psnr = calculate_psnr(img1,img2)
   print("PSNR-{0}: {1:.10f}dB".format(entry,psnr))
