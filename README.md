@@ -33,3 +33,7 @@
 10. 2021/04/21 testing的圖加上preprocessing (bayer_reverse + resize)
 
 11. 加入BSD200
+
+12. 2021/04/24 創立一個縮小版本的BSD200，稱為BSD，裡面有隨機從BSD200選出30張的圖片，目的是使用輕量版的dataset測試程式碼的正確性
+
+13. 2021/04/24 **重要！ image.load_image這個method會使到讀進來的圖片強制變成3通道！ 所以應該要用Image.open來讀取patch image，才**
