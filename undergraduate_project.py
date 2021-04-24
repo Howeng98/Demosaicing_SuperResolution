@@ -22,6 +22,7 @@ from keras.utils import to_categorical
 import os
 import keras
 from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
+from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, BatchNormalization
 from keras.layers import Lambda
 from keras.optimizers import Adam, SGD
 from keras.preprocessing.image import ImageDataGenerator
@@ -50,19 +51,19 @@ label_size = 128 #output = 128x128
 #get RGGB bayer image
 def bayer_reverse(img):
     height,width,c = img.shape;
-    tmp = np.zeros([height,width]);
+    tmp = np.zeros([height,width,1]);
     for i in range( height ):
         for j in range( width ):
             if i % 2 == 0 :
                 if j % 2 == 0:
-                    tmp[i][j] = img[i][j][0];#R
+                    tmp[i][j][0] = img[i][j][0];#R
                 else:
-                    tmp[i][j] = img[i][j][1];#G
+                    tmp[i][j][0] = img[i][j][1];#G
             else :
                 if j % 2 == 0:
-                    tmp[i][j] = img[i][j][1];#G
+                    tmp[i][j][0] = img[i][j][1];#G
                 else:
-                    tmp[i][j] = img[i][j][2];#B
+                    tmp[i][j][0] = img[i][j][2];#B
 
     return tmp;
 
@@ -87,31 +88,36 @@ def split(img,name,dir_path):
                 cv2.imwrite(path,tmp2)
 
                 zoom = im.resize((patch_size,patch_size), Image.BICUBIC) 
-                zoom2 = np.zeros([patch_size,patch_size,3]);
-                # gray =  np.zeros([patch_size,patch_size]);
+                zoom2 = np.zeros([patch_size,patch_size,3])
+                zoom3 = np.zeros([patch_size,patch_size])
                 
                 zoom = np.array(zoom)
                 zoom2[:,:,0] = zoom[:,:,2]
                 zoom2[:,:,1] = zoom[:,:,1]                
                 zoom2[:,:,2] = zoom[:,:,0]
                 
-                # zoom2 = bayer_reverse(zoom2)
-                #gray = gray/255                
-                path = os.path.join(dir_path,'patch/'+name.split('.')[0] +'_'+str(count)+'.png')
-                # im = Image.fromarray(zoom2)           
-                cv2.imwrite(path, zoom2)
+                zoom3 = bayer_reverse(zoom2)
+                                           
+                path = os.path.join(dir_path,'patch/'+name.split('.')[0] +'_'+str(count)+'.png')                          
+                cv2.imwrite(path, zoom3)
 
                 count = count + 1
 
+    print(zoom3.shape)  
+
 def main():
     path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
-    if not os.path.exists(os.path.join(path,'patch')):
-        os.makedirs(os.path.join(path,'patch'))
-    
-    if not os.path.exists(os.path.join(path,'label')):
-        os.makedirs(os.path.join(path,'label'))
-    
-    dataset_path = os.path.join(path,'T91')
+
+    if os.path.exists(os.path.join(path,'patch')):
+      shutil.rmtree(os.path.join(path,'patch'))
+    os.makedirs(os.path.join(path,'patch'))
+
+    if os.path.exists(os.path.join(path,'label')):
+      shutil.rmtree(os.path.join(path,'label'))
+    os.makedirs(os.path.join(path,'label'))
+
+
+    dataset_path = os.path.join(path,'BSD200')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -154,7 +160,7 @@ entries = os.listdir(patch_path)
 for entry in entries:
   im = image.load_img(patch_path+'/'+entry, target_size = (patch_size, patch_size))
   img = image.img_to_array(im)
-  img = img/255.
+  # img = img/255.
   train_image.append(img)
 train_image= np.stack(train_image)
 
@@ -166,7 +172,7 @@ entries = os.listdir(label_path)
 for entry in entries:
   im = image.load_img(label_path+'/'+entry, target_size = (label_size, label_size))
   img = image.img_to_array(im)
-  img = img/255.
+  # img = img/255.
   train_label.append(img)
 train_label = np.stack(train_label)
 
@@ -184,7 +190,7 @@ train_label = train_label[index,:,:,:];
 
 ############################# Model Structure ################################################
 def create_model():
-  inputs = keras.Input(shape=(None,None,3))
+  inputs = keras.Input(shape=(None,None,1))
 
   ##Subpixel Construction
   sub_layer_2 = Lambda(lambda x:tf.nn.space_to_depth(x,2)) 
@@ -196,18 +202,22 @@ def create_model():
                       kernel_size = 3, 
                       strides = 1,  # 2
                       padding = 'same', 
-                      input_shape = (None,None,3))(init)  
+                      input_shape = (None,None,1))(init)
+  # x = keras.layers.BatchNormalization()(x)
+  # x = Dropout(0.5)(x)
   # change here!                       
   # x = keras.layers.Add()([x, init])
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
+  
   ####Residual Block
   for i in range(6):
     Conv1 = keras.layers.Conv2D(filters=64,
                         kernel_size = 1, 
                         strides = 1,  # 2
                         padding = 'same',
-                        input_shape = (None,None,64))(x)
+                        input_shape = (None,None,64))(x)    
+    # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
+    # Conv1_BN = Dropout(0.5)(Conv1_BN)
     
     PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
     Conv2 = keras.layers.Conv2D(filters=64,
@@ -215,13 +225,16 @@ def create_model():
                         strides = 1,  # 2
                         padding = 'same',
                         input_shape = (None,None,64))(PReLu)
+    # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
+    # Conv2_BN = Dropout(0.5)(Conv2_BN)                        
     PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
     Conv3 = keras.layers.Conv2D(filters=64,
                         kernel_size = 1, 
                         strides = 1,  # 2
                         padding = 'same',
                         input_shape = (None,None,64))(PReLu)
-    
+    # Conv3_BN = keras.layers.BatchNormalization()(Conv3)
+    # Conv3_BN = Dropout(0.5)(Conv3_BN)
     x = keras.layers.Add()([Conv3,x])
     x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
@@ -231,7 +244,8 @@ def create_model():
                       strides = 1,  # 2
                       padding = 'same', 
                       input_shape = (None,None,1))(x)
-
+  # x = keras.layers.BatchNormalization()(x)
+  # x = Dropout(0.5)(x)
   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Conv 3x3x64x48
@@ -240,7 +254,8 @@ def create_model():
                       strides = 1,  
                       padding = 'same',                      
                       input_shape = (None,None,64))(x)
-
+  # x = keras.layers.BatchNormalization()(x)
+  # x = Dropout(0.5)(x)
   ###########Learning Residual (DCNN)############
 
   ##Recovery From Subpixel
@@ -269,12 +284,12 @@ def create_model():
   Coarse_Output = keras.layers.UpSampling2D(size=(4, 4))(rgb)
 
   ## + 
-  # outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
+  outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
 
-  model = keras.Model(inputs=inputs, outputs=Residual_Output, name="JDMSR_model")  
+  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")  
   return model
 
-batch_size = 16
+batch_size = 32
 lr = 0.001
 e_num = 50
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
@@ -293,7 +308,7 @@ early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='aut
 logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
 
-history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.2,callbacks=[checkpoint,rrp,tensorboard_callback,early_stopping],shuffle = True)
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint,rrp,tensorboard_callback,early_stopping],shuffle = True)
 
 # %tensorboard --logdir logs
 
