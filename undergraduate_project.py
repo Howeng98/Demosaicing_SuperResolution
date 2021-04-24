@@ -298,8 +298,7 @@ model.summary()
 sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
 model.compile(optimizer=sgd, loss = 'mean_squared_error', metrics = ['accuracy'])
 
-checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', 
-                              save_best_only=True,save_weights_only=True)
+checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', save_best_only=True,save_weights_only=True)
 rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
 early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='auto')
 
@@ -376,15 +375,17 @@ for entry in entries:
     path = output_path+'/'+entry
     test_image.save(path)
     
-    test_image = test_image.resize((test_image.size[0]//2, test_image.size[1]//2), Image.BILINEAR)
-    print(test_image.size)
+    test_image = test_image.resize((test_image.size[0]//2, test_image.size[1]//2), Image.BICUBIC)
+    # print(test_image.size)
     test_image = np.array(test_image)
-    print(test_image.shape)
+    test_image = bayer_reverse(test_image)
+    # print(test_image.shape)
     test_image = test_image[np.newaxis,:,:]
-    print(test_image.shape)
+    # print(test_image.shape)
 
     out = model.predict(test_image)
-    out = out[0]   
+    # print(out.shape)
+    out = out[0]
     out = image.array_to_img(out)
     path = output_path2+'/'+entry
     out.save(path)
