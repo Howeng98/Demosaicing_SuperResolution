@@ -32,7 +32,6 @@ from PIL import Image
 from random import shuffle
 # %load_ext tensorboard
 import datetime
-import shutil
 
 """**Prepare**"""
 
@@ -44,6 +43,7 @@ import copy
 import os
 from PIL import Image 
 import cv2
+import shutil
 
 patch_size = 64 #input = 64x64
 label_size = 128 #output = 128x128
@@ -51,59 +51,54 @@ label_size = 128 #output = 128x128
 #get RGGB bayer image
 def bayer_reverse(img):
     height,width,c = img.shape;
-    tmp = np.zeros([height,width,1]);
+    tmp = np.zeros([height,width]);
     for i in range( height ):
         for j in range( width ):
             if i % 2 == 0 :
                 if j % 2 == 0:
-                    tmp[i][j][0] = img[i][j][0];#R
+                    tmp[i][j] = img[i][j][2];#R
                 else:
-                    tmp[i][j][0] = img[i][j][1];#G
+                    tmp[i][j] = img[i][j][1];#G
             else :
                 if j % 2 == 0:
-                    tmp[i][j][0] = img[i][j][1];#G
+                    tmp[i][j] = img[i][j][1];#G
                 else:
-                    tmp[i][j][0] = img[i][j][2];#B
+                    tmp[i][j] = img[i][j][0];#B
 
     return tmp;
 
 #split image to prepare the train set
 def split(img,name,dir_path):
-    height,width,c = img.shape;
-    # print(img.shape)
+    height,width,c = img.shape;    
     count = 0;
+
     for i in range(0, height, 30):
         for j in range(0, width, 30):
-            if( i + label_size < height and j + label_size < width ):
-                tmp = np.zeros([label_size,label_size,3]);
-                tmp2 = np.zeros([label_size,label_size,3]);
-                
-                tmp = img[ i : i + label_size, j : j + label_size,:];
-                                
-                path = os.path.join(dir_path,'label/'+name.split('.')[0] +'_'+str(count)+'.png')                
-                im = Image.fromarray(tmp)               
-                tmp2[:,:,0] = tmp[:,:,2]
-                tmp2[:,:,1] = tmp[:,:,1]                
-                tmp2[:,:,2] = tmp[:,:,0]                
-                cv2.imwrite(path,tmp2)
+            if( i + label_size < height and j + label_size < width ):                
+                label = np.zeros([label_size,label_size,3])                
+                tmp2  = np.zeros([label_size,label_size,3])                
+                tmp2 = img[ i : i + label_size, j : j + label_size,:]
+                label_img = Image.fromarray(tmp2)
 
-                zoom = im.resize((patch_size,patch_size), Image.BICUBIC) 
-                zoom2 = np.zeros([patch_size,patch_size,3])
-                zoom3 = np.zeros([patch_size,patch_size])
+                label[:,:,0] = tmp2[:,:,2]
+                label[:,:,1] = tmp2[:,:,1]
+                label[:,:,2] = tmp2[:,:,0]
+                label_path = os.path.join(dir_path,'label/'+name.split('.')[0] +'_'+str(count)+'.png')                                                
+                cv2.imwrite(label_path,label)
+
                 
-                zoom = np.array(zoom)
-                zoom2[:,:,0] = zoom[:,:,2]
-                zoom2[:,:,1] = zoom[:,:,1]                
-                zoom2[:,:,2] = zoom[:,:,0]
+                zoom = label_img.resize((patch_size,patch_size), Image.BICUBIC)                 
+                tmp3 = np.zeros([patch_size,patch_size])
+                patch = np.zeros([patch_size,patch_size])
+
                 
-                zoom3 = bayer_reverse(zoom2)
+                zoom2 = np.array(zoom)                
+                patch = bayer_reverse(zoom2)                
                                            
-                path = os.path.join(dir_path,'patch/'+name.split('.')[0] +'_'+str(count)+'.png')                          
-                cv2.imwrite(path, zoom3)
+                patch_path = os.path.join(dir_path,'patch/'+name.split('.')[0] +'_'+str(count)+'.png')                          
+                cv2.imwrite(patch_path, patch)
 
-                count = count + 1
-
-    print(zoom3.shape)  
+                count = count + 1    
 
 def main():
     path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
@@ -117,7 +112,7 @@ def main():
     os.makedirs(os.path.join(path,'label'))
 
 
-    dataset_path = os.path.join(path,'BSD200')
+    dataset_path = os.path.join(path,'BSD')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -158,8 +153,10 @@ dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 patch_path = os.path.join(dir_path,'patch')
 entries = os.listdir(patch_path)
 for entry in entries:
-  im = image.load_img(patch_path+'/'+entry, target_size = (patch_size, patch_size))
+  # im = image.load_img(patch_path+'/'+entry, target_size = (patch_size, patch_size))
+  im = Image.open(patch_path+'/'+entry)
   img = image.img_to_array(im)
+  # print(img.shape)
   # img = img/255.
   train_image.append(img)
 train_image= np.stack(train_image)
@@ -170,7 +167,8 @@ print(train_image.shape)
 label_path = os.path.join(dir_path,'label')
 entries = os.listdir(label_path)
 for entry in entries:
-  im = image.load_img(label_path+'/'+entry, target_size = (label_size, label_size))
+  # im = image.load_img(label_path+'/'+entry, target_size = (label_size, label_size))
+  im = Image.open(label_path+'/'+entry)
   img = image.img_to_array(im)
   # img = img/255.
   train_label.append(img)
