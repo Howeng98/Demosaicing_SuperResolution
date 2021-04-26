@@ -45,3 +45,6 @@
 16. 2021/04/26 TODO, 使用bicubic
 
 17. 2021/04/26 TODO, upsampling interpolation use 'bilinear'
+   - original ``PSNR:``, ``SSIM:``
+   - current  ``PSNR:28.95``, ``SSIM:0.784``
+
