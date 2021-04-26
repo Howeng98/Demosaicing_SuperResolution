@@ -48,3 +48,6 @@
    - original ``PSNR:28.82``, ``SSIM:0.774``
    - current  ``PSNR:28.95``, ``SSIM:0.784``
 
+18. 2021/04/26 Remove rrp callbacks
+   - original ``PSNR:28.95``, ``SSIM:0.784``
+   - current  ``PSNR:29.69``, ``SSIM:0.787``
