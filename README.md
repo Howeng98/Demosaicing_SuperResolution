@@ -1,6 +1,6 @@
 # Demosaicing_SuperResolution
 
-## Testing Result
+## Testing Log
 
 01. 2021/04/16 在固定各種參數后，以Set5為基準測資
    -  使用bilinear的結果: ``PSNR:28.73``, ``SSIM:0.753``
@@ -40,7 +40,7 @@
 
 14. 2021/04/24 稍微調整了bayer_reverse里的 R和B通道的寫法，晚點可以調回來
 
-15. 2021/04/24 通道對調的寫法很重要 label[:,:,0] = tmp2]:,:,2]， 沒有這個部分的處理的話，藍色和紅色的色域會調換，所以不能
+15. 2021/04/24 通道對調的寫法很重要 label[:,:,0] = tmp2[:,:,2]， 沒有這個部分的處理的話，藍色和紅色的色域會調換，所以不能
 
 16. 2021/04/26 TODO, 使用bicubic
 
@@ -51,3 +51,6 @@
 18. 2021/04/26 Remove rrp callbacks
    - original ``PSNR:28.95``, ``SSIM:0.784``
    - current  ``PSNR:29.69``, ``SSIM:0.787``
+
+19. 2021/04/26 Testing kodak_HR dataset
+   - current ``PSNR:29.70``, ``SSIM:0.873``
