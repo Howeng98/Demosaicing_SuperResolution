@@ -43,3 +43,5 @@
 15. 2021/04/24 通道對調的寫法很重要 label[:,:,0] = tmp2]:,:,2]， 沒有這個部分的處理的話，藍色和紅色的色域會調換，所以不能
 
 16. 2021/04/26 TODO, 使用bicubic
+
+17. 2021/04/26 TODO, upsampling interpolation use 'bilinear'
