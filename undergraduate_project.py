@@ -188,103 +188,6 @@ print(train_label.shape)
 
 ############################# Model Structure ################################################
 def create_model():
-  # inputs = keras.Input(shape=(None,None,1))
-
-  # ##Subpixel Construction
-  # sub_layer_2 = Lambda(lambda x:tf.nn.space_to_depth(x,2)) 
-  # init = sub_layer_2(inputs=inputs)
-
-  # ##Learning Residual (DCNN)
-  # ####Conv 3x3x64x64 + PReLu  
-  # x = keras.layers.Conv2D(filters=64,
-  #                     kernel_size = 3, 
-  #                     strides = 1,  # 2
-  #                     padding = 'same', 
-  #                     input_shape = (None,None,1))(init)
-  # # x = keras.layers.BatchNormalization()(x)
-  # # x = Dropout(0.5)(x)
-  # # change here!                       
-  # # x = keras.layers.Add()([x, init])
-  # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-  
-  # ####Residual Block
-  # for i in range(6):
-  #   Conv1 = keras.layers.Conv2D(filters=64,
-  #                       kernel_size = 1, 
-  #                       strides = 1,  # 2
-  #                       padding = 'same',
-  #                       input_shape = (None,None,64))(x)    
-  #   # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
-  #   # Conv1_BN = Dropout(0.5)(Conv1_BN)
-    
-  #   PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-  #   Conv2 = keras.layers.Conv2D(filters=64,
-  #                       kernel_size = 3, 
-  #                       strides = 1,  # 2
-  #                       padding = 'same',
-  #                       input_shape = (None,None,64))(PReLu)
-  #   # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
-  #   # Conv2_BN = Dropout(0.5)(Conv2_BN)                        
-  #   PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
-  #   Conv3 = keras.layers.Conv2D(filters=64,
-  #                       kernel_size = 1, 
-  #                       strides = 1,  # 2
-  #                       padding = 'same',
-  #                       input_shape = (None,None,64))(PReLu)
-  #   # Conv3_BN = keras.layers.BatchNormalization()(Conv3)
-  #   # Conv3_BN = Dropout(0.5)(Conv3_BN)
-  #   x = keras.layers.Add()([Conv3,x])
-  #   x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
-  # ####Conv 3x3x64x64 + PReLu
-  # x = keras.layers.Conv2D(filters=64,
-  #                     kernel_size = 3, 
-  #                     strides = 1,  # 2
-  #                     padding = 'same', 
-  #                     input_shape = (None,None,1))(x)
-  # # x = keras.layers.BatchNormalization()(x)
-  # # x = Dropout(0.5)(x)
-  # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
-  # ####Conv 3x3x64x48
-  # x = keras.layers.Conv2D(filters=48,
-  #                     kernel_size = 3, 
-  #                     strides = 1,  
-  #                     padding = 'same',                      
-  #                     input_shape = (None,None,64))(x)
-  # # x = keras.layers.BatchNormalization()(x)
-  # # x = Dropout(0.5)(x)
-  # ###########Learning Residual (DCNN)############
-
-  # ##Recovery From Subpixel
-  # sub_layer = Lambda(lambda x:tf.nn.depth_to_space(x,4)) 
-  # Residual_Output = sub_layer(inputs=x)
-
-
-  # ##Initial Prediction
-  # R = Lambda(lambda x: x[:,:,:,0])(init)
-  # G = Lambda(lambda x: x[:,:,:,1:3])(init)
-  # G = Lambda(lambda x: K.mean(x, axis=3))(G)
-  # B = Lambda(lambda x: x[:,:,:,3])(init)
-  # # print(init.shape)
-  # # print(R.shape)
-  # # print(G.shape)
-  # # print(B.shape)
-  # R = Lambda(lambda x: tf.expand_dims(x, -1))(R)
-  # G = Lambda(lambda x: tf.expand_dims(x, -1))(G)
-  # B = Lambda(lambda x: tf.expand_dims(x, -1))(B)
-
-  # #rgb = tf.keras.backend.stack((R, G,B),axis =  3)
-  # # print(R.shape)
-  # rg = keras.layers.Concatenate(axis = 3)([R , G])
-  # rgb = keras.layers.Concatenate(axis = 3)([rg,B])
-  # # print(rgb.shape)
-  # Coarse_Output = keras.layers.UpSampling2D(size=(4, 4))(rgb)
-
-  # ## + 
-  # outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
-
-  # model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")  
   inputs = keras.Input(shape=(None,None,1))
 
   ##Subpixel Construction
@@ -299,41 +202,67 @@ def create_model():
                      kernel_size = 3, 
                      strides = 1,  # 2
                      padding = 'same', 
+                     activation = 'relu',
                      input_shape = (None,None,1))(init)
-  
-  x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
-  ####Residual Block
-  for i in range(6):
-    Conv1 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(x)
-    
-    PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-    Conv2 = keras.layers.Conv2D(filters = 64, #feature map number
-                       kernel_size = 3, 
-                       strides = 1,  # 2
-                       padding = 'same',
-                       input_shape = (None,None,64))(PReLu)
-   
-    
-    x = keras.layers.Add()([Conv2,x])
-    x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-  ####Conv 3x3x64x64 + PReLu
   x = keras.layers.Conv2D(filters = 64, #feature map number
                      kernel_size = 3, 
                      strides = 1,  # 2
                      padding = 'same', 
-                     input_shape = (None,None,1))(x)
+                     activation = 'relu',
+                     input_shape = (None,None,64))(x)
+  x = keras.layers.Conv2D(filters = 64, #feature map number
+                     kernel_size = 3, 
+                     strides = 1,  # 2
+                     padding = 'same', 
+                     activation = 'relu',
+                     input_shape = (None,None,64))(x)
   
-  x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
+  # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
+
+  ####Residual Block
+  for i in range(6):
+    Conv1 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        activation = 'relu',
+                        input_shape = (None,None,64))(x)    
+    # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
+    # Conv1_BN = Dropout(0.5)(Conv1_BN)
+    
+    # PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
+    Conv2 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 3, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        activation = 'relu',
+                        input_shape = (None,None,64))(Conv1)
+    # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
+    # Conv2_BN = Dropout(0.5)(Conv2_BN)                        
+    # PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
+    Conv3 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        activation = 'relu',
+                        input_shape = (None,None,64))(Conv2)
+
+
+  ####Conv 3x3x64x64 + PReLu
+  x = keras.layers.Conv2D(filters = 64, #feature map number
+                     kernel_size = 3, 
+                     strides = 1,  # 2
+                     padding = 'same',
+                     activation = 'relu',
+                     input_shape = (None,None,1))(Conv3)
+  
+  # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
   ####Conv 3x3x64x48
   x = keras.layers.Conv2D(filters = 48, #feature map number
                      kernel_size = 3, 
                      strides = 1,  
-                     padding = 'same',                      
+                     padding = 'same',
+                     activation = 'relu',                   
                      input_shape = (None,None,64))(x)
   
   ###########Learning Residual (DCNN)############
@@ -381,16 +310,16 @@ model = create_model()
 model.summary()
 
 sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
-model.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
+model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
 
 checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', save_best_only=True,save_weights_only=True)
 # rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
 early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='auto')
 
-logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
+# logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+# tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
 
-history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint,tensorboard_callback,early_stopping],shuffle = True)
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint, early_stopping],shuffle = False)
 
 # %tensorboard --logdir logs
 
