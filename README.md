@@ -54,3 +54,7 @@
 
 19. 2021/04/26 Testing kodak_HR dataset
    - current ``PSNR:29.70``, ``SSIM:0.873``
+
+20. 2021/04/26 add 2 more Conv layers in the first layer of DCNN part
+   - original ``PSNR:28.75``, ``SSIM:0.787``
+   - current  ``PSNR:30.25``, ``SSIM:0.813``
