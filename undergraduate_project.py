@@ -112,7 +112,7 @@ def main():
     os.makedirs(os.path.join(path,'label'))
 
 
-    dataset_path = os.path.join(path,'BSD')
+    dataset_path = os.path.join(path,'BSD200')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -146,14 +146,13 @@ from random import shuffle
 
 train_image = []
 train_label = []
-patch_size = 64 #input = 64x64
-label_size = 128 #output = 128x128
+patch_size = 64 
+label_size = 128
 
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 patch_path = os.path.join(dir_path,'patch')
 entries = os.listdir(patch_path)
-for entry in entries:
-  # im = image.load_img(patch_path+'/'+entry, target_size = (patch_size, patch_size))
+for entry in entries:  
   im = Image.open(patch_path+'/'+entry)
   img = image.img_to_array(im)
   # print(img.shape)
@@ -166,8 +165,7 @@ print(train_image.shape)
 
 label_path = os.path.join(dir_path,'label')
 entries = os.listdir(label_path)
-for entry in entries:
-  # im = image.load_img(label_path+'/'+entry, target_size = (label_size, label_size))
+for entry in entries:  
   im = Image.open(label_path+'/'+entry)
   img = image.img_to_array(im)
   # img = img/255.
@@ -178,10 +176,10 @@ print(train_label.shape)
 
 
 
-# index = [i for i in range(train_image.shape[0])]
-# shuffle(index)
-# train_image = train_image[index,:,:,:];
-# train_label = train_label[index,:,:,:];
+index = [i for i in range(train_image.shape[0])]
+shuffle(index)
+train_image = train_image[index,:,:,:];
+train_label = train_label[index,:,:,:];
 
 # np.save('drive/My Drive/Colab Notebooks/undergraduate_project/train_image.npy', train_image)
 # np.save('drive/My Drive/Colab Notebooks/undergraduate_project/train_label.npy', train_label)
@@ -216,7 +214,7 @@ def create_model():
                      padding = 'same', 
                      activation = 'relu',
                      input_shape = (None,None,64))(x)
-  
+  # x = keras.layers.BatchNormalization()(x)  
   # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
 
   ####Residual Block
@@ -224,8 +222,8 @@ def create_model():
     Conv1 = keras.layers.Conv2D(filters=64,
                         kernel_size = 1, 
                         strides = 1,  # 2
-                        padding = 'same',
-                        activation = 'relu',
+                        padding = 'same',                   
+                        activation = 'relu',     
                         input_shape = (None,None,64))(x)    
     # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
     # Conv1_BN = Dropout(0.5)(Conv1_BN)
@@ -234,7 +232,7 @@ def create_model():
     Conv2 = keras.layers.Conv2D(filters=64,
                         kernel_size = 3, 
                         strides = 1,  # 2
-                        padding = 'same',
+                        padding = 'same',                        
                         activation = 'relu',
                         input_shape = (None,None,64))(Conv1)
     # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
@@ -247,24 +245,88 @@ def create_model():
                         activation = 'relu',
                         input_shape = (None,None,64))(Conv2)
 
+    
+    # Conv3 = keras.layers.BatchNormalization()(Conv3)                        
 
+    x = keras.layers.Add()([Conv3,x])         # noteeeeeeeeeeeeeeeeeeeeeeeeeeeeee
   ####Conv 3x3x64x64 + PReLu
-  x = keras.layers.Conv2D(filters = 64, #feature map number
+  x = keras.layers.Conv2D(filters = 64,
                      kernel_size = 3, 
                      strides = 1,  # 2
                      padding = 'same',
                      activation = 'relu',
-                     input_shape = (None,None,1))(Conv3)
-  
+                     input_shape = (None,None,64))(x)
+  x = keras.layers.Conv2D(filters = 64,
+                     kernel_size = 3, 
+                     strides = 1,  # 2
+                     padding = 'same',
+                     activation = 'relu',
+                     input_shape = (None,None,64))(x)
+  x = keras.layers.Conv2D(filters = 64,
+                     kernel_size = 3, 
+                     strides = 1,  # 2
+                     padding = 'same',
+                     activation = 'relu',
+                     input_shape = (None,None,64))(x)
+  # x = keras.layers.BatchNormalization()(x)                                                                 
   # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
+
+  ## test part
+  for i in range(6):
+    Conv1 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
+                        strides = 1,  # 2
+                        padding = 'same',                   
+                        activation = 'relu',     
+                        input_shape = (None,None,64))(x)    
+    # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
+    Conv1 = Dropout(0.2)(Conv1)
+    
+    PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
+    Conv2 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 3, 
+                        strides = 1,  # 2
+                        padding = 'same',                        
+                        activation = 'relu',
+                        input_shape = (None,None,64))(Conv1)
+    # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
+    Conv2 = Dropout(0.2)(Conv2)                        
+    # PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
+    Conv3 = keras.layers.Conv2D(filters=64,
+                        kernel_size = 1, 
+                        strides = 1,  # 2
+                        padding = 'same',
+                        activation = 'relu',
+                        input_shape = (None,None,64))(Conv2)
+
+    
+    # Conv3 = keras.layers.BatchNormalization()(Conv3)                        
+
+    x = keras.layers.Add()([Conv3,x])         # noteeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  ## test part
+
+
   ####Conv 3x3x64x48
-  x = keras.layers.Conv2D(filters = 48, #feature map number
+  x = keras.layers.Conv2D(filters = 48,
                      kernel_size = 3, 
                      strides = 1,  
                      padding = 'same',
                      activation = 'relu',                   
                      input_shape = (None,None,64))(x)
-  
+  x = keras.layers.Conv2D(filters = 48,
+                     kernel_size = 3, 
+                     strides = 1,  
+                     padding = 'same',
+                     activation = 'relu',                   
+                     input_shape = (None,None,48))(x)
+  x = keras.layers.Conv2D(filters = 48,
+                     kernel_size = 3, 
+                     strides = 1,  
+                     padding = 'same',
+                     activation = 'relu',                   
+                     input_shape = (None,None,48))(x)
+  x = keras.layers.BatchNormalization()(x)
+
   ###########Learning Residual (DCNN)############
   
 
@@ -291,19 +353,19 @@ def create_model():
   rg = keras.layers.Concatenate(axis = 3)([R , G])
   rgb = keras.layers.Concatenate(axis = 3)([rg,B])
   print(rgb.shape)
-  Coarse_Output = keras.layers.UpSampling2D(size=(4, 4), interpolation="bilinear")(rgb)
+  Coarse_Output = keras.layers.UpSampling2D(size=(4, 4), interpolation="bilinear")(rgb) #size=4 , from W/2,H/2 ---> 2W,2H
 
 
   ## + 
   outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
   #outputs = Residual_Output
  
-  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")
+  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")  
   return model
 
 batch_size = 32
 lr = 0.001
-e_num = 50
+e_num = 10
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 
 model = create_model()
@@ -313,15 +375,10 @@ sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
 model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
 
 checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', save_best_only=True,save_weights_only=True)
-# rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
+rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.000002)
 early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='auto')
 
-# logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-# tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
-
-history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint, early_stopping],shuffle = False)
-
-# %tensorboard --logdir logs
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint, rrp, early_stopping],shuffle = True)
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -380,6 +437,10 @@ os.makedirs(output_path)
 if os.path.exists(output_path2):
     shutil.rmtree(output_path2)
 os.makedirs(output_path2)
+
+if os.path.exists(output_path3):
+    shutil.rmtree(output_path3)
+os.makedirs(output_path3)
 
 entries = os.listdir(input_path)
 
