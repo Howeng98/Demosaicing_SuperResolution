@@ -60,3 +60,6 @@
    - current  ``PSNR:30.25``, ``SSIM:0.813``
 
 21. 2021/05/03 try to figure out ``fusion`` and ``ensemble``.
+
+22. 2021/05/13 use BSD200 as training dataset, result show that if we add more training dataset will make PSNR improve
+   - current ``PSNR:31.45``, ``SSIM:0.798``
