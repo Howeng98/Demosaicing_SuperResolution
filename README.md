@@ -1,5 +1,8 @@
 # Demosaicing_SuperResolution
 
+![system_structure](https://user-images.githubusercontent.com/44123278/118408569-bad9b680-b6b8-11eb-9943-679285a272f3.png)
+
+
 ## Testing Log
 
 01. 2021/04/16 在固定各種參數后，以Set5為基準測資
