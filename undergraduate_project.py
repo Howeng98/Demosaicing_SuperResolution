@@ -112,7 +112,7 @@ def main():
     os.makedirs(os.path.join(path,'label'))
 
 
-    dataset_path = os.path.join(path,'BSD200')
+    dataset_path = os.path.join(path,'BSD')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -219,12 +219,13 @@ def create_model():
 
   ####Residual Block
   for i in range(6):
+    start = x
     Conv1 = keras.layers.Conv2D(filters=64,
                         kernel_size = 1, 
                         strides = 1,  # 2
-                        padding = 'same',                   
-                        activation = 'relu',     
-                        input_shape = (None,None,64))(x)    
+                        padding = 'same',                                             
+                        input_shape = (None,None,64))(start)
+    Conv1 = keras.layers.LeakyReLU()(Conv1)
     # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
     # Conv1_BN = Dropout(0.5)(Conv1_BN)
     
@@ -232,23 +233,22 @@ def create_model():
     Conv2 = keras.layers.Conv2D(filters=64,
                         kernel_size = 3, 
                         strides = 1,  # 2
-                        padding = 'same',                        
-                        activation = 'relu',
+                        padding = 'same',                                                
                         input_shape = (None,None,64))(Conv1)
+    Conv2 = keras.layers.LeakyReLU()(Conv2)
     # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
     # Conv2_BN = Dropout(0.5)(Conv2_BN)                        
     # PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
     Conv3 = keras.layers.Conv2D(filters=64,
                         kernel_size = 1, 
                         strides = 1,  # 2
-                        padding = 'same',
-                        activation = 'relu',
+                        padding = 'same',         
                         input_shape = (None,None,64))(Conv2)
-
+    Conv3 = keras.layers.LeakyReLU()(Conv3)
     
-    # Conv3 = keras.layers.BatchNormalization()(Conv3)                        
-
-    x = keras.layers.Add()([Conv3,x])         # noteeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    # Concatenate
+    x = keras.layers.Add()([Conv3,x])
+    
   ####Conv 3x3x64x64 + PReLu
   x = keras.layers.Conv2D(filters = 64,
                      kernel_size = 3, 
@@ -270,40 +270,6 @@ def create_model():
                      input_shape = (None,None,64))(x)
   # x = keras.layers.BatchNormalization()(x)                                                                 
   # x = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(x)
-
-  ## test part
-  for i in range(6):
-    Conv1 = keras.layers.Conv2D(filters=64,
-                        kernel_size = 1, 
-                        strides = 1,  # 2
-                        padding = 'same',                   
-                        activation = 'relu',     
-                        input_shape = (None,None,64))(x)    
-    # Conv1_BN = keras.layers.BatchNormalization()(Conv1)
-    Conv1 = Dropout(0.2)(Conv1)
-    
-    PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv1)
-    Conv2 = keras.layers.Conv2D(filters=64,
-                        kernel_size = 3, 
-                        strides = 1,  # 2
-                        padding = 'same',                        
-                        activation = 'relu',
-                        input_shape = (None,None,64))(Conv1)
-    # Conv2_BN = keras.layers.BatchNormalization()(Conv2)
-    Conv2 = Dropout(0.2)(Conv2)                        
-    # PReLu = keras.layers.PReLU(alpha_initializer='zeros', alpha_regularizer=None, alpha_constraint=None, shared_axes=[1,2])(Conv2)
-    Conv3 = keras.layers.Conv2D(filters=64,
-                        kernel_size = 1, 
-                        strides = 1,  # 2
-                        padding = 'same',
-                        activation = 'relu',
-                        input_shape = (None,None,64))(Conv2)
-
-    
-    # Conv3 = keras.layers.BatchNormalization()(Conv3)                        
-
-    x = keras.layers.Add()([Conv3,x])         # noteeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-  ## test part
 
 
   ####Conv 3x3x64x48
@@ -364,15 +330,16 @@ def create_model():
   return model
 
 batch_size = 32
-lr = 0.001
-e_num = 10
+lr = 0.0001
+e_num = 50
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 
 model = create_model()
 model.summary()
 
 sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
-model.compile(optimizer=Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['accuracy'])
+
+model.compile(optimizer=sgd, loss = 'mean_squared_error', metrics = ['accuracy'])
 
 checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', save_best_only=True,save_weights_only=True)
 rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.000002)
