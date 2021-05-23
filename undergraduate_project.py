@@ -23,6 +23,7 @@ import os
 import keras
 from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
 from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, BatchNormalization
+from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau, EarlyStopping
 from keras.layers import Lambda
 from keras.optimizers import Adam, SGD
 from keras.preprocessing.image import ImageDataGenerator
@@ -91,7 +92,6 @@ def split(img,name,dir_path):
                 tmp3 = np.zeros([patch_size,patch_size])
                 patch = np.zeros([patch_size,patch_size])
 
-                
                 zoom2 = np.array(zoom)                
                 patch = bayer_reverse(zoom2)                
                                            
@@ -112,7 +112,7 @@ def main():
     os.makedirs(os.path.join(path,'label'))
 
 
-    dataset_path = os.path.join(path,'BSD')
+    dataset_path = os.path.join(path,'BSD200')
     entries = os.listdir(dataset_path)
     for entry in entries:
         print(entry)
@@ -244,7 +244,7 @@ def create_model():
                         strides = 1,  # 2
                         padding = 'same',         
                         input_shape = (None,None,64))(Conv2)
-    Conv3 = keras.layers.LeakyReLU()(Conv3)
+    # Conv3 = keras.layers.LeakyReLU()(Conv3)
     
     # Concatenate
     x = keras.layers.Add()([Conv3,x])
@@ -273,7 +273,13 @@ def create_model():
 
 
   ####Conv 3x3x64x48
-  x = keras.layers.Conv2D(filters = 48,
+  x = keras.layers.Conv2D(filters = 64,
+                     kernel_size = 3, 
+                     strides = 1,  
+                     padding = 'same',
+                     activation = 'relu',                   
+                     input_shape = (None,None,64))(x)
+  x = keras.layers.Conv2D(filters = 64,
                      kernel_size = 3, 
                      strides = 1,  
                      padding = 'same',
@@ -284,13 +290,7 @@ def create_model():
                      strides = 1,  
                      padding = 'same',
                      activation = 'relu',                   
-                     input_shape = (None,None,48))(x)
-  x = keras.layers.Conv2D(filters = 48,
-                     kernel_size = 3, 
-                     strides = 1,  
-                     padding = 'same',
-                     activation = 'relu',                   
-                     input_shape = (None,None,48))(x)
+                     input_shape = (None,None,64))(x)
   x = keras.layers.BatchNormalization()(x)
 
   ###########Learning Residual (DCNN)############
@@ -330,7 +330,7 @@ def create_model():
   return model
 
 batch_size = 32
-lr = 0.0001
+lr = 0.001
 e_num = 50
 dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 
@@ -339,13 +339,14 @@ model.summary()
 
 sgd = SGD(lr=lr, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=1.0)
 
-model.compile(optimizer=sgd, loss = 'mean_squared_error', metrics = ['accuracy'])
+model.compile(optimizer=Adam(), loss = 'mean_squared_error', metrics = ['accuracy'])
 
-checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='val_loss', save_best_only=True,save_weights_only=True)
+checkpoint = ModelCheckpoint(os.path.join(dir_path,'model.hdf5'),verbose=1, monitor='loss', save_best_only=True, save_weights_only=True)
 rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.000002)
+
 early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1, mode='auto')
 
-history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint, rrp, early_stopping],shuffle = True)
+history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_size,verbose=1,validation_split = 0.1,callbacks=[checkpoint, rrp],shuffle = True)
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -446,16 +447,17 @@ import math
 import os
 from google.colab.patches import cv2_imshow
 from skimage.measure import compare_ssim
+from skimage.measure import compare_ssim as ssim
 
 def calculate_psnr(original, contrast):
     mse = np.mean((original - contrast) ** 2)
     if mse == 0:
         return 100
     max_value = 255.0
-    return 20 * math.log10(max_value / math.sqrt(mse))
+    return 10 * math.log10(max_value**2 / mse)    
     
 
-path = 'drive/My Drive/Colab Notebooks/undergraduate_project' 
+path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 input_path = os.path.join(path,'output')
 output_path = os.path.join(path,'output2')
 entries = os.listdir(input_path)
@@ -466,19 +468,22 @@ total_ssim = 0.
 for entry in entries:
   img1 = cv2.imread(os.path.join(input_path,entry))
   img2 = cv2.imread(os.path.join(output_path,entry))
-  # print(img1.shape)
-  # print(img2.shape)
-  # img1 = cv2.resize(img1, (img2.shape[1], img2.shape[0]), interpolation=cv2.INTER_CUBIC)
+  # img2 = cv2.resize(img1, (img1.shape[1]//2, img1.shape[0]//2), interpolation=cv2.INTER_LINEAR)
+  # img2 = cv2.resize(img2, (img2.shape[1]*2, img2.shape[0]*2), interpolation=cv2.INTER_LINEAR)
+
+
+  # PSNR
   psnr = calculate_psnr(img1,img2)
   print("PSNR-{0}: {1:.10f}dB".format(entry,psnr))
-  ssim = compare_ssim(img1, img2, multichannel=True)
+
+  # SSIM
+  ssim = compare_ssim(img1, img2, data_range=255.0 - 0.0,multichannel=True)
   print("SSIM-{0}: {1:.10f}".format(entry,ssim))
+
   total_psnr += psnr
   total_ssim += ssim
   count += 1
 print(count)
-# cv2_imshow(img1)
-# cv2_imshow(img2)
 
 total_psnr = total_psnr / count
 total_ssim = total_ssim / count
