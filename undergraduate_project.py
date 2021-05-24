@@ -9,9 +9,6 @@ Original file is located at
 
 !nvidia-smi
 
-import tensorflow as tf
-tf.test.gpu_device_name()
-
 # Commented out IPython magic to ensure Python compatibility.
 import numpy as np
 from tensorflow.keras import layers
@@ -306,19 +303,19 @@ def create_model():
   G = Lambda(lambda x: x[:,:,:,1:3])(init)
   G = Lambda(lambda x: K.mean(x, axis=3))(G)
   B = Lambda(lambda x: x[:,:,:,3])(init)
-  print(init.shape)
-  print(R.shape)
-  print(G.shape)
-  print(B.shape)
+  # print(init.shape)
+  # print(R.shape)
+  # print(G.shape)
+  # print(B.shape)
   R = Lambda(lambda x: tf.expand_dims(x, -1))(R)
   G = Lambda(lambda x: tf.expand_dims(x, -1))(G)
   B = Lambda(lambda x: tf.expand_dims(x, -1))(B)
   
   #rgb = tf.keras.backend.stack((R, G,B),axis =  3)
-  print(R.shape)
+  # print(R.shape)
   rg = keras.layers.Concatenate(axis = 3)([R , G])
   rgb = keras.layers.Concatenate(axis = 3)([rg,B])
-  print(rgb.shape)
+  # print(rgb.shape)
   Coarse_Output = keras.layers.UpSampling2D(size=(4, 4), interpolation="bilinear")(rgb) #size=4 , from W/2,H/2 ---> 2W,2H
 
 
@@ -393,7 +390,7 @@ dir_path = 'drive/My Drive/Colab Notebooks/undergraduate_project'
 model = create_model()
 model.load_weights(os.path.join(dir_path,'model.hdf5'))
 
-input_path = os.path.join(dir_path, 'Set5')
+input_path = os.path.join(dir_path, 'Set14')
 output_path = os.path.join(dir_path, 'output')
 output_path2 = os.path.join(dir_path, 'output2')
 output_path3 = os.path.join(dir_path, 'output3')
@@ -414,25 +411,53 @@ entries = os.listdir(input_path)
 
 for entry in entries:
     # Test Image
+    print('-----------')
     path = input_path+'/'+entry
     test_image = Image.open(path)
+    print(test_image.size)
+    
+    if test_image.size[0] % 2 != 0: #odd size
+      test_image = test_image.resize((test_image.size[0]-1, test_image.size[1]), Image.BICUBIC)
+    if test_image.size[1] % 2 != 0:
+      test_image = test_image.resize((test_image.size[0], test_image.size[1]-1), Image.BICUBIC)
     path = output_path+'/'+entry
     test_image.save(path)
-    
+    print(test_image.size)
+
     test_image = test_image.resize((test_image.size[0]//2, test_image.size[1]//2), Image.BICUBIC)
-    # print(test_image.size)
-    test_image = np.array(test_image)
-    test_image = bayer_reverse(test_image)
-    test_image = test_image[:,:,np.newaxis]
-    test_image = image.array_to_img(test_image)
+    print(test_image.size)
+    test_image_array = np.array(test_image)
+    test_image_array = bayer_reverse(test_image_array)
+    test_image_array = test_image_array[:,:,np.newaxis]
+    test_image = image.array_to_img(test_image_array)
     test_image.save(output_path3+'/'+entry)
     # print(test_image.shape)
+    print(test_image.size)
     
     
     # print(test_image.shape)
     test_image = np.array(test_image)
     test_image = test_image[np.newaxis,:,:]
-    out = model.predict(test_image)
+    try:
+      out = model.predict(test_image)
+    except:
+      path = input_path+'/'+entry
+      test_image = Image.open(path)
+      if (test_image.size[0]//2)%2 != 0:
+        test_image = test_image.resize(((test_image.size[0]//2) - 1, test_image.size[1]//2), Image.BICUBIC)
+      if (test_image.size[1]//2)%2 != 0:
+        test_image = test_image.resize((test_image.size[0]//2 , (test_image.size[1]//2) - 1), Image.BICUBIC)
+      test_image_array = np.array(test_image)
+      test_image_array = bayer_reverse(test_image_array)
+      test_image_array = test_image_array[:,:,np.newaxis]
+      test_image = image.array_to_img(test_image_array)
+      print(test_image.size)
+      test_image.save(output_path3+'/'+entry)
+      test_image = np.array(test_image)
+      test_image = test_image[np.newaxis,:,:]
+      out = model.predict(test_image)
+
+
     # print(out.shape)
     out = out[0]
     out = image.array_to_img(out)
@@ -465,11 +490,11 @@ count = 0
 total_psnr = 0.
 total_ssim = 0.
 
-for entry in entries:
+for entry in entries:  
   img1 = cv2.imread(os.path.join(input_path,entry))
   img2 = cv2.imread(os.path.join(output_path,entry))
-  # img2 = cv2.resize(img1, (img1.shape[1]//2, img1.shape[0]//2), interpolation=cv2.INTER_LINEAR)
-  # img2 = cv2.resize(img2, (img2.shape[1]*2, img2.shape[0]*2), interpolation=cv2.INTER_LINEAR)
+  img1 = cv2.resize(img1, (img2.shape[1], img2.shape[0]), interpolation=cv2.INTER_CUBIC)
+    
 
 
   # PSNR
