@@ -1,71 +1,30 @@
-import numpy as np
-#from tensorflow.keras import layers
-from keras.preprocessing import image
-import tensorflow as tf 
-from keras.models import Model,load_model
-from keras.utils import to_categorical
-import os
-import keras
-from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau
+from keras.models import load_model
 from keras.layers import Lambda
-from keras.optimizers import Adam
-from keras import backend as K
-import random
+from keras.preprocessing import image
+import keras
+import tensorflow as tf 
+import numpy as np
+#import matplotlib.pyplot as plt
 from PIL import Image 
-from random import shuffle
-
-batch_sz = 16
+from keras import backend as K
+import os
+import math
 oti = 'adam'
-lr = 0.0002
-e_num = 40
+lr = 0.0001
 
+def get_cpsnr(RGB1,RGB2,b):
+	RGB1 = RGB1.astype('double'); 
+	RGB2 = RGB2.astype('double');
+	diff = RGB1[b:-1-b,b:-1-b,:]-RGB2[b:-1-b,b:-1-b,:];
+	num = np.size(diff[:,:,1]);
+	MSE_R = np.sum( np.power(diff[:,:,2],2) );
+	MSE_G = np.sum( np.power(diff[:,:,1],2) );
+	MSE_B = np.sum( np.power(diff[:,:,0],2) );
+	CMSE = (MSE_R + MSE_G + MSE_B)/(3*num);
+	CPSNR = 10*math.log(255*255/CMSE,10);
+	return CPSNR;
 
-#http://ethen8181.github.io/machine-learning/keras/resnet_cam/resnet_cam.html
-
-
-##https://ithelp.ithome.com.tw/articles/10223034
-
-
-def main():
-  # train_image = np.load('train_image.npy')
-  # train_label = np.load('train_label.npy')
-
-  # test_image = np.load('test_img.npy')
-  # test_label = np.load('test_lab.npy')
-
-
-  train_image = []
-  train_label = []
-
-  entries = os.listdir('../patch')
-  for entry in entries:
-    im = image.load_img('../patch/'+entry, target_size = (64, 64))
-    img = image.img_to_array(im)
-    img = img[:,:,0]
-    img = img[:,:,np.newaxis]
-    train_image.append(img)
-  train_image= np.stack(train_image)
-
-  print(train_image.shape)# (x,128,128,1)
-  np.save('train_image',train_image)
-
-  entries = os.listdir('../label')
-  for entry in entries:
-    im = image.load_img('../label/'+entry, target_size = (128, 128))
-    img = image.img_to_array(im)
-    train_label.append(img)
-  train_label = np.stack(train_label)
-
-  print(train_label.shape)# (x,256,256,3)
-  
-  np.save('train_label',train_label)
-
-  index = [i for i in range(train_image.shape[0])]
-  shuffle(index)
-  train_image = train_image[index,:,:,:];
-  train_label = train_label[index,:,:,:];
-
-
+def create_model():
   inputs = keras.Input(shape=(None,None,1))
 
   ini = keras.layers.Conv2D(filters = 128, #feature map number
@@ -189,47 +148,63 @@ def main():
 
   ## + 
   outputs = keras.layers.Add()([Residual_Output,Coarse_Output])
-  
-  
-  #outputs = 
-  #outputs = Residual_Output
- 
-  model = keras.Model(inputs=inputs, outputs=outputs, name="JDMSR_model")
-  model.summary()
-  #model.compile(optimizer=keras.optimizers.Nadam(lr), loss = 'mean_squared_error', metrics = ['mse'])
-  model.compile(optimizer=Adam(lr=0.0002, beta_1=0.9, beta_2=0.999, epsilon=1e-08), loss = 'mean_squared_error', metrics = ['mse'])
-  
-  #histories = Histories()
-  checkpoint = ModelCheckpoint('./model.hdf5',verbose=1, monitor='val_loss', 
-                                save_best_only=True,save_weights_only=True)
-  rrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='min', min_lr=0.0000002)
 
-  history = model.fit(train_image, train_label, epochs=e_num, batch_size=batch_sz,verbose=1,
-              validation_split = 0.1,callbacks=[checkpoint,rrp],shuffle = True)
-  #model.save("trashn.h5")
-  # loss, accuracy = model.evaluate(test_image,test_label)
-  # print(loss)
-  
-  
-  # entries = os.listdir('./kodap/')
-  # for entry in entries:
-  #          path = './kodap/'+entry
-  #          test_image = image.load_img(path)
-  #          test_image = image.img_to_array(test_image)
+  model = keras.Model(inputs=inputs, outputs=outputs, name="mnist_model")
+  return model
 
-  #          test_image = test_image[:,:,0]
-  #          test_image = test_image[np.newaxis,:,:,np.newaxis]
-           
-  #          out = model.predict(test_image)
-  #          path = './koda/'+entry
-  #          ori = image.load_img(path)
-  #          ori = image.img_to_array(ori)
-  #          out = out[0];
+model = create_model()
+model.load_weights('./model.hdf5')
+#model = keras.Model(inputs=(64,64,1), outputs=(128,128,3), name="mnist_model")
+#model.load_weights('trashup.h5')
 
-  #          out = image.array_to_img(out)
-  #          plt.imshow(out)
-  #          plt.show()
+#model.compile(optimizer=keras.optimizers.Nadam(lr), loss = 'mean_squared_error', metrics = ['mse'])
 
 
-if __name__ == '__main__':
-    main()
+# test_image = image.load_img('./p/im_002_0.png', target_size = (64, 64))
+# test_image = image.img_to_array(test_image)
+# print(test_image)
+# test_image = test_image[:,:,0]
+# test_image = test_image[np.newaxis,:,:,np.newaxis]
+# result = model.predict(test_image)
+# print(result.shape)
+
+# out = image.array_to_img(result[0])
+
+# plt.imshow(out)
+# plt.show()
+
+if not os.path.exists('MRout'):
+        os.makedirs('MRout')
+
+
+sum = 0
+entries = os.listdir('./Set5p/')
+for entry in entries:
+         path = './Set5p/'+entry
+
+
+         test_image = image.load_img(path)
+         test_image = image.img_to_array(test_image)
+
+         test_image = test_image[:,:,0]
+         test_image = test_image[np.newaxis,:,:,np.newaxis]
+         
+         out = model.predict(test_image)
+         path = './Set5/'+entry
+         ori = image.load_img(path)
+         ori = image.img_to_array(ori)
+         out = out[0];
+         out[out>255] = 255;
+         out[out<0] = 0;
+         
+         #out = out*255;
+         print(entry,get_cpsnr(out,ori,10) );
+         sum+=get_cpsnr(out,ori,10);
+         out = image.array_to_img(out)
+         path = './Set5out/'+entry
+         out.save(path)
+
+         # plt.imshow(out)
+         # plt.show()
+print('avg')        
+print(sum/5)
