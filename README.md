@@ -133,6 +133,7 @@ Except demosaic, we also need to consider image resolution. This repo is using a
    1. Try to add some layers, and Dense Block into model, dense structure is good at extracting important information from Image/Video.
    2. Design your own loss function for this purpose. We are doing two great topic (**Demosaicing** and **SR**), so create a specific loss function for this model may make output Image quality upgrade.
    3. Redesign a small model for CFA pixel input data convert to 4 dimensions input image, after that link to DCNN model to continue process. (Implement own model instead of call defined function from library)
+   4. Feel free to contact me if you have any problem or idea!
 
 ## References
 
