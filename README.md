@@ -64,7 +64,7 @@ Except demosaic, we also need to consider image resolution. This repo is using a
 ![p5](https://user-images.githubusercontent.com/44123278/127734732-e1bac7f8-302d-4a62-98c5-c49871df6763.png)
 
 
-## Testing Log
+## Testing Log and Notes
 
 01. 2021/04/16 在固定各種參數后，以Set5為基準測資
    -  使用bilinear的結果: ``PSNR:28.73``, ``SSIM:0.753``
@@ -127,3 +127,20 @@ Except demosaic, we also need to consider image resolution. This repo is using a
 
 22. 2021/05/13 use BSD200 as training dataset, result show that if we add more training dataset will make PSNR improve
    - current ``PSNR:31.45``, ``SSIM:0.798``
+
+## Future Work
+
+   1. Try to add some layers, and Dense Block into model, dense structure is good at extracting important information from Image/Video.
+   2. Design your own loss function for this purpose. We are doing two great topic (**Demosaicing** and **SR**), so create a specific loss function for this model may make output Image quality upgrade.
+   3. Redesign a small model for CFA pixel input data convert to 4 dimensions input image, after that link to DCNN model to continue process. (Implement own model instead of call defined function from library)
+
+## References
+
+   1. [Ruofan Zhou, Radhakrishna Achanta, Sabine Süsstrunk, “Deep Residual Network for Joint Demosaicing and
+Super-Resolution,”IC EPFL, arXiv:1802.06573v1 2018.]
+   2. [Junkang Zhang, Cheolhong An, Truong Nguyen, “Deep Joint Demosaicing and Super Resolution on High
+Resolution Bayer Sensor Data,”2018]
+   3. [W. T. Huang, W. J. Chen, S. C. Tai, “A Sharp Edge-Preserving Joint Color Demosaicking and Zooming
+Algorithm using Integrated Gradients and An Iterative Back-Projection Technique,”2013.]
+   4. [DengWen Zhou, WeiMing Dong, Wengang Chen, “Joint Demosaicking and Zooming Using Moderate Spectral
+Correlation and Consistent Edge Map,”2014.]
