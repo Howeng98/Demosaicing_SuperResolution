@@ -137,10 +137,10 @@ Except demosaic, we also need to consider image resolution. This repo is using a
 ## References
 
    1. [Ruofan Zhou, Radhakrishna Achanta, Sabine Süsstrunk, “Deep Residual Network for Joint Demosaicing and
-Super-Resolution,”IC EPFL, arXiv:1802.06573v1 2018.]
+Super-Resolution,”IC EPFL, arXiv:1802.06573v1 2018.](https://asset-pdf.scinapse.io/prod/2788066301/2788066301.pdf)
    2. [Junkang Zhang, Cheolhong An, Truong Nguyen, “Deep Joint Demosaicing and Super Resolution on High
-Resolution Bayer Sensor Data,”2018]
+Resolution Bayer Sensor Data,”2018](https://ieeexplore.ieee.org/document/8646321)
    3. [W. T. Huang, W. J. Chen, S. C. Tai, “A Sharp Edge-Preserving Joint Color Demosaicking and Zooming
-Algorithm using Integrated Gradients and An Iterative Back-Projection Technique,”2013.]
+Algorithm using Integrated Gradients and An Iterative Back-Projection Technique,”2013.](https://dl.acm.org/doi/abs/10.1016/j.dsp.2013.12.007)
    4. [DengWen Zhou, WeiMing Dong, Wengang Chen, “Joint Demosaicking and Zooming Using Moderate Spectral
-Correlation and Consistent Edge Map,”2014.]
+Correlation and Consistent Edge Map,”2014.](https://www.researchgate.net/publication/272295875_Joint_demosaicking_and_zooming_using_moderate_spectral_correlation_and_consistent_edge_map)
