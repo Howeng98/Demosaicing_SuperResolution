@@ -37,6 +37,32 @@ Except demosaic, we also need to consider image resolution. This repo is using a
 
 ![model_design](https://user-images.githubusercontent.com/44123278/127734509-0896c8e7-1509-492a-84ee-71415adc01a9.png)
 
+## Training Dataset
+
+   - **BSD200** : 200 Images with 481x321
+
+## Testing Dataset
+
+   - **Set5** : 5 Images
+   - **Kodak** : 24 Images
+   - **BSD100** : 100 Images
+
+   ### Dataset overview
+   ![set5](https://user-images.githubusercontent.com/44123278/127734697-a34eadf8-25a2-4596-99ee-804cf798bc72.png)
+   
+   ![kodak](https://user-images.githubusercontent.com/44123278/127734698-4a1febd9-0491-4fde-8157-946257c1acf9.png)
+   
+   ![bsd100](https://user-images.githubusercontent.com/44123278/127734700-0f886a98-aa5a-46a9-ad7c-4c3e89abc478.png)
+
+## Performance Result Overview
+
+![performence](https://user-images.githubusercontent.com/44123278/127734715-2b0e018f-c2c5-4954-a081-e5988907619c.png)
+
+![p1](https://user-images.githubusercontent.com/44123278/127734725-2ddedfb2-eddd-47aa-a843-7c157935f77d.png)
+![p2](https://user-images.githubusercontent.com/44123278/127734728-0ec137bd-0903-4983-bbf9-a88585a3e47b.png)
+![p3](https://user-images.githubusercontent.com/44123278/127734731-9c8444cb-b18b-4b12-a75f-50a6eb1a6d70.png)
+![p5](https://user-images.githubusercontent.com/44123278/127734732-e1bac7f8-302d-4a62-98c5-c49871df6763.png)
+
 
 ## Testing Log
 
