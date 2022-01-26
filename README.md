@@ -1,5 +1,5 @@
 # Demosaicing_SuperResolution
-
+![Status](https://img.shields.io/static/v1.svg?label=Status&message=Finished&color=green)
 
 This repo is trying to make a way that can make you image reduce its [Demosaicing](https://en.wikipedia.org/wiki/Demosaicing) and [Super Resolution](https://en.wikipedia.org/wiki/Super-resolution_imaging) executing time by joint them in a model. And also enhance image resolution quality by algorithm.
 
